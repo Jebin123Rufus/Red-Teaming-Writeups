@@ -123,3 +123,12 @@ Multiple endpoints also returned successful responses (`HTTP 200 OK`), suggestin
 
 At this stage, the focus shifted toward analyzing the authentication workflow and interacting with the discovered endpoints to identify potential vulnerabilities or logic flaws.
 
+## Further Enumeration
+
+Despite identifying multiple endpoints and an exposed sign-in interface, further manual testing and walkthrough analysis of the web application on port 80 did not immediately reveal any exploitable vulnerabilities or useful information.
+
+The discovered functionality appeared intentionally minimal, and the exposed endpoints largely resulted in redirects, restricted methods, or dead ends during initial testing.
+
+At this stage, the attack surface on port 80 appeared exhausted for the moment.
+
+To continue the assessment, attention shifted toward another exposed service running on port `8080`, which became the next target for enumeration and analysis.
