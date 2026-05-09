@@ -29,9 +29,11 @@ nmap -sC -sV <MACHINE_IP>
 
 ```text
 PORT     STATE SERVICE VERSION
+
 22/tcp   open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.13
 631/tcp  open  ipp     CUPS 2.4
 - http-title: Forbidden - CUPS v2.4.12
+
 80/tcp   open  ssl/http El Bandito Server
 8080/tcp open  http    Nginx
 
