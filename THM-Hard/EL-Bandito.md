@@ -1,8 +1,25 @@
 # El Bandito — TryHackMe Write-up
 
+## Room Overview
+
+El Bandito, the new identity of the infamous Jack the Exploiter, has entered the Web3 landscape with a large-scale token scam operation. By abusing the decentralized nature of blockchain technologies, he distributed fraudulent tokens to deceive investors and destabilize trust within the DeFi ecosystem.
+
+The objective of this challenge is to investigate the infrastructure used by El Bandito, uncover hidden vulnerabilities, retrieve the required web flags, and ultimately track down his operations.
+
+Difficulty: **Hard**
+
+---
+
+## Objectives
+
+1. Find the first web flag
+2. Find the second web flag
+
+---
+
 ## Reconnaissance
 
-Started with an Nmap scan to identify open ports and running services on the target.
+### Nmap Scan
 
 ```bash
 nmap -sC -sV <MACHINE_IP>
@@ -18,13 +35,6 @@ PORT    STATE SERVICE VERSION
 http-title: Forbidden - CUPS v2.4.12
 ```
 
-### Analysis
 
-Two ports were exposed:
-
-* **22/tcp (SSH)**
-  Running OpenSSH 8.2p1. This could potentially provide remote access if valid credentials were discovered later during enumeration.
-
-* **631/tcp (CUPS / IPP)**
-  The target was hosting a CUPS printing service. The HTTP response returned:
-
+* Understanding attack surface prioritization
+* Combining manual testing with automated enumeration
