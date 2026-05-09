@@ -1,8 +1,8 @@
 <div align="center">
 
-# El Bandito — TryHackMe Write-up
+# El Bandito
 
-<img src="../assets/images/El-Bandito-room-overview.png" width="850">
+<img src="../assets/images/El-Bandito.png" width="850">
 
 <br>
 
@@ -15,7 +15,7 @@
 
 ---
 
-# El Bandito — TryHackMe Write-up
+# El Bandito — TryHackMe
 
 ## Room Overview
 
@@ -406,6 +406,8 @@ Sec-WebSocket-Key: nf6dB8Pb/BLinZ7UexUXHg==late, br
 
 GET /env HTTP/1.1
 Host: 10.10.91.160:8080
+
+
 ```
 
 ### Important Notes
@@ -475,6 +477,8 @@ Content-Length: 900
 Content-Type: application/x-www-form-urlencoded
 
 data=e
+
+
 ```
 
 The payload abused inconsistencies between HTTP/2 and backend HTTP/1.1 request parsing.
@@ -541,12 +545,12 @@ El Bandito was an excellent advanced web exploitation challenge focused heavily 
 
 The room combined:
 
-* reconnaissance
-* JavaScript analysis
-* backend service discovery
-* HTTP smuggling
+* Reconnaissance
+* JavaScript Analysis
+* Backend Service Discovery
+* HTTP Smuggling
 * WebSocket upgrade abuse
-* HTTP/2 desynchronization
+* HTTP/2 Desynchronization
 
 into a realistic attack chain demonstrating how subtle parsing inconsistencies can lead to severe security vulnerabilities.
 
