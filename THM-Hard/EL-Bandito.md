@@ -143,7 +143,7 @@ The application appeared to simulate a Web3 cryptocurrency platform and exposed 
 
 ### Bandit-Coin Dashboard
 
-![Bandit-Coin Dashboard](../assets/images/EL-Bandito-8080-dashboard.png)
+![Bandit-Coin Dashboard](../assets/images/El-Bandito-8080-dashboard.png)
 
 Initial walkthrough and manual testing of the application did not immediately reveal any sensitive information or obvious vulnerabilities.
 
@@ -152,8 +152,8 @@ Since the web application appeared larger and more feature-rich than the previou
 ### Gobuster Enumeration
 
 ```bash
-gobuster dir -u http://10.49.178.30:8080 \
--w /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-110000.txt \
+gobuster dir -u http://<MACHINE_IP>:8080 \
+-w <WORDLIST_PATH> \
 -b 404
 ```
 
