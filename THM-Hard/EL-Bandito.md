@@ -405,3 +405,57 @@ The `/admin-flag` endpoint exposed the first web flag.
 
 This vulnerability demonstrated a critical flaw in the backend's handling of WebSocket upgrade requests and internal request parsing, ultimately enabling HTTP request smuggling and unauthorized access to restricted internal resources.
 
+## HTTP/2 Desynchronization Attack
+
+Using the previously retrieved administrative credentials, access was gained to the chat application hosted on port `80`.
+
+While analyzing authenticated traffic through Burp Suite, it was observed that the application communicated using the `HTTP/2` protocol.
+
+This introduced the possibility of exploiting HTTP request desynchronization vulnerabilities between the frontend and backend servers.
+
+The assessment focused on poisoning the backend request queue in order to retrieve requests belonging to other users.
+
+### Smuggled HTTP/2 Request
+
+A crafted desynchronization payload was sent through Burp Repeater:
+
+```http
+POST / HTTP/2
+Host: 10.10.40.250:80
+Cookie: session=<SESSION_ID>
+Content-Length: 0
+Content-Type: application/x-www-form-urlencoded
+
+POST /send-message HTTP/1.1
+Host: 10.10.40.250:80
+Cookie: session=<SESSION_ID>
+Content-Length: 900
+Content-Type: application/x-www-form-urlencoded
+
+data=e
+
+
+```
+
+The payload abused inconsistencies between HTTP/2 and backend HTTP/1.1 request parsing.
+
+The backend incorrectly interpreted the smuggled request as a separate HTTP request, allowing the backend request queue to become poisoned.
+
+### Important Notes
+
+* Burp Repeater's **Update Content-Length** option had to be disabled.
+* Two blank lines had to be left after the smuggled request.
+* The payload needed to be sent multiple times through Burp Repeater.
+* The chat application required repeated refreshing in order to receive another user's queued request.
+
+Successful exploitation eventually caused another user's request to be processed within the poisoned backend connection.
+
+This allowed retrieval of sensitive application data, including the second flag.
+
+### Second Flag Retrieved
+
+![Second Flag](../assets/images/El-Bandito-final-flag.png)
+
+This attack demonstrated a critical HTTP/2 desynchronization vulnerability caused by improper request boundary handling between frontend and backend systems.
+
+The vulnerability ultimately enabled backend request poisoning and unauthorized access to other users' application data.
