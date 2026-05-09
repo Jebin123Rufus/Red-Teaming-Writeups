@@ -5,7 +5,7 @@
 Started with an Nmap scan to identify open ports and running services on the target.
 
 ```bash
-nmap -sC -sV 10.48.138.122
+nmap -sC -sV <MACHINE_IP>
 ```
 
 ### Output
@@ -28,6 +28,3 @@ Two ports were exposed:
 * **631/tcp (CUPS / IPP)**
   The target was hosting a CUPS printing service. The HTTP response returned:
 
-
-
-The next step was to investigate the web service manually and enumerate accessible endpoints.
