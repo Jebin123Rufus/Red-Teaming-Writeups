@@ -31,6 +31,7 @@ nmap -sC -sV <MACHINE_IP>
 PORT     STATE SERVICE VERSION
 
 22/tcp   open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.13
+
 631/tcp  open  ipp     CUPS 2.4
 - http-title: Forbidden - CUPS v2.4.12
 
