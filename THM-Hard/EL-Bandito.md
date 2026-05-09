@@ -40,3 +40,38 @@ PORT     STATE SERVICE VERSION
 
 ```
 
+## Web Enumeration
+
+After the initial reconnaissance phase, the HTTPS service hosted on the target machine was manually inspected through a web browser.
+
+Browsing to the HTTPS application revealed a minimal page displaying the message:
+
+```text
+nothing to see
+```
+
+At first glance, the application appeared intentionally minimal and did not expose any obvious functionality.
+
+### Initial HTTPS Page
+
+![Initial HTTPS Page](assets/images/https-homepage.png)
+
+Since minimal web applications often hide functionality within client-side resources, the page source was inspected for additional clues.
+
+---
+
+## Source Code Analysis
+
+Reviewing the HTML source code revealed a JavaScript reference pointing to:
+
+```text
+static/messages.js
+```
+
+This suggested that additional functionality or hidden logic might exist within the application's static resources.
+
+### Page Source Inspection
+
+![Page Source](assets/images/page-source.png)
+
+The discovery of the JavaScript file indicated that further web enumeration was required to uncover hidden endpoints and application functionality.
