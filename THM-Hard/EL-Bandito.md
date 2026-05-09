@@ -35,6 +35,3 @@ PORT    STATE SERVICE VERSION
 http-title: Forbidden - CUPS v2.4.12
 ```
 
-
-* Understanding attack surface prioritization
-* Combining manual testing with automated enumeration
