@@ -201,3 +201,59 @@ Notable findings included:
 The `/error` endpoint returning a `500 Internal Server Error` strongly suggested backend processing issues and indicated that the application might expose additional information during malformed requests or forced error conditions.
 
 At this stage, the assessment shifted toward probing these endpoints further for misconfigurations, information disclosure, or access control weaknesses.
+
+## JavaScript Analysis
+
+While analyzing the exposed `static/messages.js` file discovered earlier during source code inspection, additional application functionality was identified within the client-side JavaScript logic.
+
+Reviewing the script revealed two interesting endpoints used by the application:
+
+```text id="7r9x1m"
+/getMessages
+/send_message
+```
+
+### Discovered Endpoints
+
+![Discovered Endpoints](../assets/images/messages-js-endpoints.png)
+
+The `fetchMessages()` function performed a request to:
+
+```javascript id="8vt6mz"
+fetch("/getMessages")
+```
+
+Attempting to access this endpoint directly through the browser resulted in a redirect back to the login page, strongly suggesting that the endpoint required authentication or session validation.
+
+### `/getMessages` Redirect
+
+![getMessages Redirect](../assets/images/El-Bandito-getmessages-function.png)
+
+Further analysis of the JavaScript source revealed another function named `sendMessage()` which issued a POST request to:
+
+```javascript id="jlwm5k"
+fetch("/send_message", {
+	method: "POST"
+})
+```
+
+Direct browser access to `/send_message` returned:
+
+```text id="jlwm3r"
+Method Not Allowed
+```
+
+### `/send_message` Response
+
+![send\_message Response](../assets/images/El-Bandito-sendmessage-function.png)
+
+This behavior indicated that the endpoint likely expected specifically crafted POST requests rather than standard browser GET requests.
+
+The exposed messaging functionality appeared highly interesting because:
+
+* authenticated message retrieval was implemented
+* client-side message handling logic was exposed
+* custom POST requests were used for sending data
+* authentication checks appeared inconsistently enforced
+
+At this stage, the focus shifted toward testing the exposed endpoints directly and analyzing how the backend processed user-controlled input.
