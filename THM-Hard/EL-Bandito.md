@@ -208,52 +208,42 @@ While analyzing the exposed `static/messages.js` file discovered earlier during 
 
 Reviewing the script revealed two interesting endpoints used by the application:
 
-```text id="7r9x1m"
+```text id="jlwm9q"
 /getMessages
 /send_message
 ```
 
-### Discovered Endpoints
+The `fetchMessages()` function performed requests to the `/getMessages` endpoint in order to retrieve user messages dynamically.
 
-![Discovered Endpoints](../assets/images/messages-js-endpoints.png)
-
-The `fetchMessages()` function performed a request to:
-
-```javascript id="8vt6mz"
+```javascript id="jlwm2x"
 fetch("/getMessages")
 ```
 
-Attempting to access this endpoint directly through the browser resulted in a redirect back to the login page, strongly suggesting that the endpoint required authentication or session validation.
+### `fetchMessages()` Function
 
-### `/getMessages` Redirect
+![fetchMessages Function](../assets/images/El-Bandito-getmessages-function.png)
 
-![getMessages Redirect](../assets/images/El-Bandito-getmessages-function.png)
+Attempting to access `/getMessages` directly through the browser resulted in a redirect back to the login page, indicating that the endpoint required authentication or session validation.
 
-Further analysis of the JavaScript source revealed another function named `sendMessage()` which issued a POST request to:
+Further analysis of the JavaScript source revealed another function named `sendMessage()` which issued a POST request to the `/send_message` endpoint.
 
-```javascript id="jlwm5k"
+```javascript id="jlwm7r"
 fetch("/send_message", {
 	method: "POST"
 })
 ```
 
-Direct browser access to `/send_message` returned:
+Direct browser access to `/send_message` returned a `Method Not Allowed` response, suggesting that the endpoint specifically expected crafted POST requests rather than standard browser GET requests.
 
-```text id="jlwm3r"
-Method Not Allowed
-```
+### `sendMessage()` Function
 
-### `/send_message` Response
-
-![send\_message Response](../assets/images/El-Bandito-sendmessage-function.png)
-
-This behavior indicated that the endpoint likely expected specifically crafted POST requests rather than standard browser GET requests.
+![sendMessage Function](../assets/images/El-Bandito-sendmessage-function.png)
 
 The exposed messaging functionality appeared highly interesting because:
 
 * authenticated message retrieval was implemented
-* client-side message handling logic was exposed
+* client-side messaging logic was exposed
 * custom POST requests were used for sending data
-* authentication checks appeared inconsistently enforced
+* backend interaction endpoints were directly visible within the JavaScript source
 
-At this stage, the focus shifted toward testing the exposed endpoints directly and analyzing how the backend processed user-controlled input.
+At this stage, the focus shifted toward interacting with these endpoints directly and analyzing how the backend processed user-controlled input.
