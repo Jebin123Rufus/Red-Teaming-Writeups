@@ -459,3 +459,33 @@ This allowed retrieval of sensitive application data, including the second flag.
 This attack demonstrated a critical HTTP/2 desynchronization vulnerability caused by improper request boundary handling between frontend and backend systems.
 
 The vulnerability ultimately enabled backend request poisoning and unauthorized access to other users' application data.
+
+## Flags
+
+### Flag 1
+
+```text
+THM{:::MY_DECLINATION:+62°_14'_31.4'':::}
+```
+
+### Flag 2
+
+```text
+THM{¡!¡RIGHT_ASCENSION_12h_36m_25.46s!¡!}
+```
+
+
+```markdown id="jlwm5h"
+## Lessons Learned
+
+This room demonstrated several advanced web exploitation concepts including:
+
+- source code analysis and endpoint discovery
+- internal service enumeration
+- backend proxy behavior analysis
+- WebSocket upgrade abuse
+- HTTP request smuggling
+- HTTP/2 desynchronization attacks
+- backend request poisoning
+
+The challenge emphasized the importance of understanding backend request parsing inconsistencies and how proxy architectures can introduce critical attack surfaces.
