@@ -247,3 +247,60 @@ The exposed messaging functionality appeared highly interesting because:
 * backend interaction endpoints were directly visible within the JavaScript source
 
 At this stage, the focus shifted toward interacting with these endpoints directly and analyzing how the backend processed user-controlled input.
+
+## Service Discovery & Backend Analysis
+
+While further exploring the **Bandit-Coin** dashboard hosted on port `8080`, the application's services section exposed two internal domains along with their status indicators:
+
+```text id="jlwm8z"
+http://bandito.websocket.thm  -> OFFLINE
+http://bandito.public.thm     -> ONLINE
+```
+
+### Exposed Internal Services
+
+![Services Dashboard](../assets/images/El-Bandito-services-dashboard.png)
+
+Testing the discovered domains revealed different behavior:
+
+* `bandito.public.thm` redirected back to the main web application hosted on port `80`
+* `bandito.websocket.thm` appeared inaccessible externally and remained unresolved through direct browser interaction
+
+This strongly suggested the existence of an internal backend service not directly exposed to external users.
+
+Further investigation using the browser developer tools revealed that the dashboard performed backend requests through the following endpoint:
+
+```text id="jlwm4f"
+/isOnline?url=
+```
+
+The application issued requests similar to:
+
+```http id="jlwm1u"
+GET /isOnline?url=http://bandito.websocket.thm HTTP/1.1
+Host: 10.49.178.30:8080
+User-Agent: Mozilla/5.0
+Referer: http://10.49.178.30:8080/services.html
+Connection: keep-alive
+```
+
+Interestingly, the requests generated different responses depending on the target service:
+
+| URL                     | Response |
+| ----------------------- | -------- |
+| `bandito.public.thm`    | HTTP 200 |
+| `bandito.websocket.thm` | HTTP 500 |
+
+The differing responses strongly indicated that the backend application was attempting to communicate with internal services directly.
+
+Several observations made this functionality highly suspicious:
+
+* user-controlled URLs were processed by the backend
+* internal hostnames were exposed through the dashboard
+* backend requests behaved differently based on target services
+* one service appeared intentionally inaccessible externally
+* the endpoint potentially acted as a proxy or backend connectivity checker
+
+The presence of the `bandito.websocket.thm` hostname also suggested that a WebSocket-related service might exist internally within the infrastructure.
+
+At this stage, the assessment shifted toward testing whether the `/isOnline` functionality could be abused to interact with internal services or smuggle crafted requests through the backend application.
