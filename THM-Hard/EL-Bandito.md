@@ -54,7 +54,7 @@ At first glance, the application appeared intentionally minimal and did not expo
 
 ### Initial HTTPS Page
 
-![Initial HTTPS Page](assets/images/https-homepage.png)
+![Initial HTTPS Page](assets/images/El-Bandito-https-recon.png)
 
 Since minimal web applications often hide functionality within client-side resources, the page source was inspected for additional clues.
 
@@ -72,6 +72,6 @@ This suggested that additional functionality or hidden logic might exist within 
 
 ### Page Source Inspection
 
-![Page Source](assets/images/page-source.png)
+![Page Source](assets/images/El-Bandito-https-source.png)
 
 The discovery of the JavaScript file indicated that further web enumeration was required to uncover hidden endpoints and application functionality.
