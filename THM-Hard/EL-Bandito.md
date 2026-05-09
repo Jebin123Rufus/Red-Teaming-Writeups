@@ -132,3 +132,72 @@ The discovered functionality appeared intentionally minimal, and the exposed end
 At this stage, the attack surface on port 80 appeared exhausted for the moment.
 
 To continue the assessment, attention shifted toward another exposed service running on port `8080`, which became the next target for enumeration and analysis.
+
+## Port 8080 Enumeration
+
+After exhausting the initial attack surface on port 80, attention shifted toward another exposed service running on port `8080`.
+
+Browsing to the application revealed a cryptocurrency-themed website called **Bandit-Coin**.
+
+The application appeared to simulate a Web3 cryptocurrency platform and exposed a dashboard-style interface.
+
+### Bandit-Coin Dashboard
+
+![Bandit-Coin Dashboard](../assets/images/EL-Bandito-8080-dashboard.png)
+
+Initial walkthrough and manual testing of the application did not immediately reveal any sensitive information or obvious vulnerabilities.
+
+Since the web application appeared larger and more feature-rich than the previous service, directory enumeration was performed to identify hidden endpoints and administrative functionality.
+
+### Gobuster Enumeration
+
+```bash
+gobuster dir -u http://10.49.178.30:8080 \
+-w /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-110000.txt \
+-b 404
+```
+
+### Interesting Endpoints
+
+```text
+/admin               (Status: 403)
+/assets              (Status: 200)
+/health              (Status: 200)
+/traceroute          (Status: 403)
+/trace               (Status: 403)
+/environment         (Status: 403)
+/administration      (Status: 403)
+/error               (Status: 500)
+/administrator       (Status: 403)
+/metrics             (Status: 403)
+/env                 (Status: 403)
+/dump                (Status: 403)
+```
+
+### Analysis
+
+The enumeration process exposed multiple potentially sensitive endpoints commonly associated with:
+
+* administration panels
+* debugging functionality
+* environment configurations
+* application health monitoring
+* tracing utilities
+* metrics collection
+
+Several endpoints returning `403 Forbidden` were especially interesting because they confirmed the existence of restricted resources rather than nonexistent paths.
+
+Notable findings included:
+
+| Endpoint                 | Observation                                       |
+| ------------------------ | ------------------------------------------------- |
+| `/admin`                 | Restricted administrative functionality           |
+| `/environment`           | Potential environment configuration exposure      |
+| `/metrics`               | Possible monitoring or observability endpoint     |
+| `/dump`                  | Potential debug or memory dump functionality      |
+| `/trace` & `/traceroute` | Possible tracing or internal diagnostic utilities |
+| `/error`                 | Returned HTTP 500 Internal Server Error           |
+
+The `/error` endpoint returning a `500 Internal Server Error` strongly suggested backend processing issues and indicated that the application might expose additional information during malformed requests or forced error conditions.
+
+At this stage, the assessment shifted toward probing these endpoints further for misconfigurations, information disclosure, or access control weaknesses.
