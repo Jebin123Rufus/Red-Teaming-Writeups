@@ -248,3 +248,40 @@ Access to the administrator panel was successfully obtained, completing the priv
 
 ![Administrator Panel](../assets/images/Domino-admin-session.png)
 
+### Credential Reuse
+
+The `config.php` file disclosed the application's database credentials. Since earlier enumeration identified **`devops`** as the underlying system user, the recovered password was tested against the SSH service.
+
+**Recovered Credentials**
+
+| Username | Password      |
+| -------- | ------------- |
+| `devops` | `D3v0ps!2024` |
+
+The credentials were successfully reused to authenticate over SSH, providing shell access to the target system.
+
+```bash
+ssh devops@<TARGET_IP>
+```
+
+---
+
+### Remote Code Execution & Lateral Movement
+
+After obtaining shell access as the `devops` user, the third challenge flag was retrieved from `/opt/flag3.txt`.
+
+```bash
+cat /opt/flag3.txt
+```
+
+The home directory of the `devops` user was then inspected, revealing the fourth challenge flag.
+
+```bash
+cat ~/user.txt
+```
+
+![SSH Session - Flag 3 & Flag 4](../assets/images/Domino-devops.png)
+
+> **Flag 3:** `THM{rf1_2_rc3_f00th0ld_fl4g3}`
+
+> **Flag 4:** `THM{s5h_cr3d_r3u53_l4t3r4l_fl4g4}`
