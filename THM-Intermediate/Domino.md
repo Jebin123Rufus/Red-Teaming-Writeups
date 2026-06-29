@@ -120,3 +120,32 @@ The response disclosed the administrator's profile along with the first challeng
 ![Administrator Profile via IDOR](../assets/images/Domino-profile-flag.png)
 
 > **Flag 1:** `THM{1d0r_h0r1z0nt4l_4cc3ss_fl4g1}`
+
+### JWT Authentication Bypass
+
+The application relied on JWTs for authorization but failed to validate the token signature. By crafting a JWT with administrator privileges and setting the algorithm to `none`, it was possible to forge a valid administrator token.
+
+**JWT Payload**
+
+```json
+{
+  "username": "admin",
+  "role": "admin",
+  "iat": 1516239022
+}
+```
+
+![Crafted JWT Token](../assets/images/Domino-jwt.png)
+
+The forged JWT was supplied in the `Authorization` header when requesting the administrator panel.
+
+```bash
+curl -H "Authorization: Bearer <FORGED_JWT>" http://<TARGET_IP>/admin/
+```
+
+The application accepted the forged token and granted unauthorized access to the administrator panel, disclosing the second challenge flag.
+
+![JWT Authentication Bypass](../assets/images/Domino-session-hijack.png)
+
+> **Flag 2:** `THM{bl1nd_x55_s3ss10n_h1j4ck_fl4g2}`
+
