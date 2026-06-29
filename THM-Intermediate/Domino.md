@@ -74,7 +74,7 @@ The enumeration revealed several interesting endpoints, particularly **`/admin`*
 
 The `team.php` page exposed the names and email addresses of NexusCorp employees, allowing valid usernames to be identified for authentication attempts.
 
-![User Enumeration](../assets/images/domino-user-enumeration.png)
+![User Enumeration](../assets/images/Domino-users.png)
 
 ### Password Brute Force
 
@@ -99,7 +99,7 @@ The attack successfully recovered the following credentials:
 
 The recovered credentials provided access to the NexusCorp Employee Portal as **robert.wilson**. The authenticated dashboard exposed several internal features, including a **My Profile API** endpoint.
 
-![Authenticated Dashboard](../assets/images/domino-dashboard.png)
+![Authenticated Dashboard](../assets/images/Domino-user-dashboard.png)
 
 ### Insecure Direct Object Reference (IDOR)
 
@@ -117,6 +117,6 @@ By modifying the `id` value from the authenticated user's profile to `1`, it was
 
 The response disclosed the administrator's profile along with the first challenge flag stored in the **notes** field.
 
-![Administrator Profile via IDOR](../assets/images/domino-idor.png)
+![Administrator Profile via IDOR](../assets/images/Domino-profile-flag.png)
 
 > **Flag 1:** `THM{1d0r_h0r1z0nt4l_4cc3ss_fl4g1}`
